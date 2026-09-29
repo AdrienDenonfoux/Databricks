@@ -1,0 +1,33 @@
+resources:
+  jobs:
+    Motocycle_Job:
+      name: Motocycle Bundle Job
+      tasks:
+        - task_key: Land_New_Data
+          notebook_task:
+            notebook_path: "../src/4- Pipeline/4.1 Pipeline ingestion.py"
+            source: WORKSPACE
+          existing_cluster_id: 0919-092330-t1mia36r
+        - task_key: DLT
+          depends_on:
+            - task_key: Land_New_Data
+          pipeline_task:
+            pipeline_id: ${resources.pipelines.pipeline_motocyclestore_pipeline.id}
+        - task_key: Pipeline_result
+          depends_on:
+            - task_key: DLT
+          notebook_task:
+            notebook_path: "../src/4- Pipeline/4.2 Pipeline Result.py"
+            source: WORKSPACE
+          existing_cluster_id: 0919-092330-t1mia36r
+      #permissions:
+      #  - group_name: motocyclestore-admins
+      #    level: CAN_MANAGE
+      #  - group_name: users
+      #    level: CAN_VIEW
+      #  - group_name: deployment-service-principals
+      #    level: CAN_MANAGE_RUN
+      queue:
+        enabled: true
+      performance_target: PERFORMANCE_OPTIMIZED
+

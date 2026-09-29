@@ -1,0 +1,14 @@
+resources:
+  pipelines:
+    pipeline_motocyclestore_pipeline:
+      name: Motocyclestore Bundle pipeline
+      configuration:
+        dataset_path: /Volumes/demoworkspace/default/motostore_dataset
+      libraries:
+        - glob:
+            include: "../src/4- Pipeline/Motocyclestore pipeline/transformations/**"
+      schema: ${var.schema}
+      photon: true
+      catalog: ${var.catalog}
+      serverless: true
+      root_path: "../src/4- Pipeline/Motocyclestore pipeline"
