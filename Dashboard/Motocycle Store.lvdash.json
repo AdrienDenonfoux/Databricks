@@ -1,0 +1,885 @@
+{
+  "datasets": [
+    {
+      "name": "44b173d2",
+      "displayName": "cn_daily_customer_motocycles",
+      "config": {
+        "version": "1.1",
+        "source": "demoworkspace.motocycle_etl.cn_daily_customer_motocycles",
+        "dimensions": [
+          {
+            "expr": "source.*"
+          }
+        ],
+        "measures": [
+          {
+            "name": "count",
+            "expr": "COUNT(*)",
+            "comment": "Représente le nombre total de lignes dans l'ensemble de données. Utilisez cette mesure pour compter tous les",
+            "displayName": "Décompte"
+          }
+        ]
+      }
+    },
+    {
+      "name": "60ecb3c7",
+      "displayName": "fr_daily_customer_motocycles",
+      "config": {
+        "version": "1.1",
+        "source": "demoworkspace.adriendenonfoux1.fr_daily_customer_motocycles"
+      }
+    },
+    {
+      "name": "1add5b1d",
+      "displayName": "sp_daily_customer_motocycles",
+      "config": {
+        "version": "1.1",
+        "source": "demoworkspace.adriendenonfoux1.sp_daily_customer_motocycles"
+      }
+    },
+    {
+      "name": "6efb8d8a",
+      "displayName": "orders_cleaned",
+      "config": {
+        "version": "1.1",
+        "source": "demoworkspace.adriendenonfoux1.orders_cleaned",
+        "dimensions": [
+          {
+            "expr": "source.*"
+          }
+        ],
+        "measures": [
+          {
+            "name": "count",
+            "expr": "COUNT(*)",
+            "comment": "Représente le nombre total de lignes dans l'ensemble de données. Utilisez cette mesure pour compter tous les",
+            "displayName": "Décompte"
+          }
+        ]
+      }
+    },
+    {
+      "name": "d175a767",
+      "displayName": "customers",
+      "config": {
+        "version": "1.1",
+        "source": "demoworkspace.adriendenonfoux1.customers",
+        "dimensions": [
+          {
+            "expr": "source.*"
+          }
+        ],
+        "measures": [
+          {
+            "name": "count",
+            "expr": "COUNT(*)",
+            "comment": "Représente le nombre total de lignes dans l'ensemble de données. Utilisez cette mesure pour compter tous les",
+            "displayName": "Décompte"
+          }
+        ]
+      }
+    },
+    {
+      "name": "4afa1d69",
+      "displayName": "motocycles",
+      "config": {
+        "version": "1.1",
+        "source": "demoworkspace.default.motocycles",
+        "dimensions": [
+          {
+            "expr": "source.*"
+          }
+        ],
+        "measures": [
+          {
+            "name": "count",
+            "expr": "COUNT(*)",
+            "comment": "Représente le nombre total de lignes dans l'ensemble de données. Utilisez cette mesure pour compter tous les",
+            "displayName": "Décompte"
+          }
+        ]
+      }
+    },
+    {
+      "name": "992429d3",
+      "displayName": "Total Revenue",
+      "queryLines": [
+        "SELECT SUM(total) AS revenue FROM orders_raw"
+      ],
+      "catalog": "demoworkspace",
+      "schema": "adriendenonfoux1"
+    },
+    {
+      "name": "2be98315",
+      "displayName": "Order Count",
+      "queryLines": [
+        "USE CATALOG `demoworkspace`;\n",
+        "USE SCHEMA `adriendenonfoux1`;\n",
+        "\n",
+        "SELECT\n",
+        "  COUNT(*) AS nb_orders\n",
+        "FROM\n",
+        "  orders_raw"
+      ]
+    },
+    {
+      "name": "8f5f73e3",
+      "displayName": "orders_raw",
+      "config": {
+        "version": "1.1",
+        "source": "demoworkspace.adriendenonfoux1.orders_raw",
+        "dimensions": [
+          {
+            "expr": "source.*"
+          }
+        ],
+        "measures": [
+          {
+            "name": "count",
+            "expr": "COUNT(*)",
+            "comment": "Représente le nombre total de lignes dans l'ensemble de données. Utilisez cette mesure pour compter tous les",
+            "displayName": "Décompte"
+          }
+        ]
+      }
+    },
+    {
+      "name": "57573279",
+      "displayName": "Active Customers",
+      "queryLines": [
+        "USE CATALOG `demoworkspace`;\n",
+        "USE SCHEMA `default`;\n",
+        "\n",
+        "SELECT COUNT(DISTINCT customer_id) AS active_customers FROM demoworkspace.motocycle_bundle.orders_raw;"
+      ]
+    },
+    {
+      "name": "4a064aa6",
+      "displayName": "Explode Motocycle Order",
+      "queryLines": [
+        "USE CATALOG `demoworkspace`;\n",
+        "USE SCHEMA `default`;\n",
+        "\n",
+        "WITH exploded_orders AS (\n",
+        "  SELECT\n",
+        "    m.motocycle_id,\n",
+        "    m.quantity,\n",
+        "    m.subtotal,\n",
+        "    o.order_id,\n",
+        "    o.customer_id,\n",
+        "    o.order_timestamp\n",
+        "  FROM demoworkspace.motocycle_bundle.orders_cleaned o\n",
+        "  LATERAL VIEW explode(o.motocycles) exploded AS m\n",
+        ")\n",
+        "SELECT\n",
+        "    o.*,\n",
+        "    m.brand,\n",
+        "    m.name,\n",
+        "    m.category,\n",
+        "    m.engine_displacement_cc,\n",
+        "    m.horsepower,\n",
+        "    m.price\n",
+        "FROM exploded_orders o\n",
+        "INNER JOIN demoworkspace.default.motocycles m\n",
+        "ON m.motocycle_id = o.motocycle_id"
+      ]
+    },
+    {
+      "name": "20524a53",
+      "displayName": "Customer Location",
+      "queryLines": [
+        "USE CATALOG `demoworkspace`;\n",
+        "USE SCHEMA `default`;\n",
+        "\n",
+        "SELECT \n",
+        "    customer_id,\n",
+        "    email,\n",
+        "    updated,\n",
+        "    profile.adresse.street,\n",
+        "    profile.adresse.city,\n",
+        "    profile.adresse.country,\n",
+        "    profile.first_name,\n",
+        "    profile.last_name\n",
+        "FROM demoworkspace.motocycle_bundle.customers"
+      ]
+    }
+  ],
+  "pages": [
+    {
+      "name": "8a4bb010",
+      "displayName": "Summary",
+      "layout": [
+        {
+          "widget": {
+            "name": "aad04b23",
+            "multilineTextboxSpec": {
+              "lines": [
+                "# <span style=\"text-align:center;display:block;\">Motocycle Store Analysys</span>"
+              ]
+            }
+          },
+          "position": {
+            "x": 0,
+            "y": 0,
+            "width": 12,
+            "height": 1
+          }
+        },
+        {
+          "widget": {
+            "name": "total-revenue",
+            "queries": [
+              {
+                "name": "main_query",
+                "query": {
+                  "datasetName": "992429d3",
+                  "fields": [
+                    {
+                      "name": "sum(revenue)",
+                      "expression": "SUM(`revenue`)"
+                    }
+                  ],
+                  "disaggregated": false
+                }
+              }
+            ],
+            "spec": {
+              "frame": {
+                "showTitle": true,
+                "title": {
+                  "value": "Total revenue",
+                  "fields": []
+                }
+              },
+              "version": 2,
+              "widgetType": "counter",
+              "encodings": {
+                "value": {
+                  "fieldName": "sum(revenue)"
+                }
+              },
+              "data": {
+                "queryName": "main_query"
+              }
+            }
+          },
+          "position": {
+            "x": 0,
+            "y": 1,
+            "width": 4,
+            "height": 2
+          }
+        },
+        {
+          "widget": {
+            "name": "584d1a22",
+            "queries": [
+              {
+                "name": "main_query",
+                "query": {
+                  "datasetName": "2be98315",
+                  "fields": [
+                    {
+                      "name": "sum(nb_orders)",
+                      "expression": "SUM(`nb_orders`)"
+                    }
+                  ],
+                  "disaggregated": false
+                }
+              }
+            ],
+            "spec": {
+              "frame": {
+                "showTitle": true,
+                "title": {
+                  "value": "Number of order",
+                  "fields": []
+                }
+              },
+              "version": 2,
+              "widgetType": "counter",
+              "encodings": {
+                "value": {
+                  "fieldName": "sum(nb_orders)"
+                }
+              },
+              "data": {
+                "queryName": "main_query"
+              }
+            }
+          },
+          "position": {
+            "x": 4,
+            "y": 1,
+            "width": 4,
+            "height": 2
+          }
+        },
+        {
+          "widget": {
+            "name": "4c06d342",
+            "queries": [
+              {
+                "name": "main_query",
+                "query": {
+                  "datasetName": "8f5f73e3",
+                  "fields": [
+                    {
+                      "name": "avg(total)",
+                      "expression": "AVG(`total`)"
+                    }
+                  ],
+                  "disaggregated": false
+                }
+              }
+            ],
+            "spec": {
+              "frame": {
+                "showTitle": true,
+                "title": {
+                  "value": "Average Basket Size",
+                  "fields": []
+                }
+              },
+              "version": 2,
+              "widgetType": "counter",
+              "encodings": {
+                "value": {
+                  "fieldName": "avg(total)"
+                }
+              },
+              "data": {
+                "queryName": "main_query"
+              }
+            }
+          },
+          "position": {
+            "x": 8,
+            "y": 1,
+            "width": 4,
+            "height": 2
+          }
+        },
+        {
+          "widget": {
+            "name": "3403958a",
+            "queries": [
+              {
+                "name": "main_query",
+                "query": {
+                  "datasetName": "57573279",
+                  "fields": [
+                    {
+                      "name": "sum(active_customers)",
+                      "expression": "SUM(`active_customers`)"
+                    }
+                  ],
+                  "disaggregated": false
+                }
+              }
+            ],
+            "spec": {
+              "frame": {
+                "showTitle": true,
+                "title": {
+                  "value": "Active Customers",
+                  "fields": []
+                }
+              },
+              "version": 2,
+              "widgetType": "counter",
+              "encodings": {
+                "value": {
+                  "fieldName": "sum(active_customers)"
+                }
+              },
+              "data": {
+                "queryName": "main_query"
+              }
+            }
+          },
+          "position": {
+            "x": 0,
+            "y": 3,
+            "width": 5,
+            "height": 2
+          }
+        },
+        {
+          "widget": {
+            "name": "top-selling-motorcycles",
+            "queries": [
+              {
+                "name": "main_query",
+                "query": {
+                  "datasetName": "4a064aa6",
+                  "fields": [
+                    {
+                      "name": "brand",
+                      "expression": "`brand`"
+                    },
+                    {
+                      "name": "sum(subtotal)",
+                      "expression": "SUM(`subtotal`)"
+                    },
+                    {
+                      "name": "sum(quantity)",
+                      "expression": "SUM(`quantity`)"
+                    },
+                    {
+                      "name": "name",
+                      "expression": "`name`"
+                    }
+                  ],
+                  "disaggregated": false
+                }
+              }
+            ],
+            "spec": {
+              "frame": {
+                "showTitle": true,
+                "title": {
+                  "value": "## <span style=\"text-align:center;display:block\">Top-Selling Motorcycles</span>",
+                  "fields": []
+                }
+              },
+              "version": 3,
+              "widgetType": "bar",
+              "encodings": {
+                "x": {
+                  "fieldName": "sum(quantity)",
+                  "scale": {
+                    "type": "quantitative"
+                  }
+                },
+                "y": {
+                  "fieldName": "name",
+                  "scale": {
+                    "type": "categorical"
+                  }
+                },
+                "color": {
+                  "fieldName": "brand",
+                  "scale": {
+                    "type": "categorical"
+                  }
+                },
+                "extra": [
+                  {
+                    "fieldName": "sum(subtotal)"
+                  }
+                ]
+              },
+              "data": {
+                "queryName": "main_query"
+              }
+            }
+          },
+          "position": {
+            "x": 5,
+            "y": 3,
+            "width": 7,
+            "height": 8
+          }
+        },
+        {
+          "widget": {
+            "name": "revenue-by-brand",
+            "queries": [
+              {
+                "name": "main_query",
+                "query": {
+                  "datasetName": "4a064aa6",
+                  "fields": [
+                    {
+                      "name": "sum(subtotal)",
+                      "expression": "SUM(`subtotal`)"
+                    },
+                    {
+                      "name": "brand",
+                      "expression": "`brand`"
+                    }
+                  ],
+                  "disaggregated": false
+                }
+              }
+            ],
+            "spec": {
+              "frame": {
+                "showTitle": true,
+                "title": {
+                  "value": "## <span style=\"text-align:center;display:block\">Revenue by Brand</span>",
+                  "fields": []
+                }
+              },
+              "version": 3,
+              "widgetType": "pie",
+              "encodings": {
+                "angle": {
+                  "fieldName": "sum(subtotal)",
+                  "scale": {
+                    "type": "quantitative"
+                  },
+                  "axis": {
+                    "hideTitle": true
+                  }
+                },
+                "color": {
+                  "fieldName": "brand",
+                  "scale": {
+                    "type": "categorical"
+                  }
+                },
+                "label": {
+                  "show": true
+                }
+              },
+              "data": {
+                "queryName": "main_query"
+              }
+            }
+          },
+          "position": {
+            "x": 0,
+            "y": 5,
+            "width": 5,
+            "height": 6
+          }
+        },
+        {
+          "widget": {
+            "name": "performance-vs-price",
+            "queries": [
+              {
+                "name": "main_query",
+                "query": {
+                  "datasetName": "4a064aa6",
+                  "fields": [
+                    {
+                      "name": "brand",
+                      "expression": "`brand`"
+                    },
+                    {
+                      "name": "name",
+                      "expression": "`name`"
+                    },
+                    {
+                      "name": "horsepower",
+                      "expression": "`horsepower`"
+                    },
+                    {
+                      "name": "price",
+                      "expression": "`price`"
+                    }
+                  ],
+                  "disaggregated": true
+                }
+              }
+            ],
+            "spec": {
+              "frame": {
+                "showTitle": true,
+                "title": {
+                  "value": "## <span style=\"text-align:center;display:block\">Performance vs. Price</span>",
+                  "fields": []
+                }
+              },
+              "version": 3,
+              "widgetType": "scatter",
+              "encodings": {
+                "x": {
+                  "fieldName": "horsepower",
+                  "scale": {
+                    "type": "quantitative"
+                  }
+                },
+                "y": {
+                  "fieldName": "price",
+                  "scale": {
+                    "type": "quantitative"
+                  }
+                },
+                "color": {
+                  "fieldName": "brand",
+                  "scale": {
+                    "type": "categorical"
+                  }
+                },
+                "extra": [
+                  {
+                    "fieldName": "name"
+                  }
+                ]
+              },
+              "data": {
+                "queryName": "main_query"
+              }
+            }
+          },
+          "position": {
+            "x": 0,
+            "y": 11,
+            "width": 12,
+            "height": 6
+          }
+        },
+        {
+          "widget": {
+            "name": "6ddea335",
+            "queries": [
+              {
+                "name": "main_query",
+                "query": {
+                  "datasetName": "20524a53",
+                  "fields": [
+                    {
+                      "name": "count(*)",
+                      "expression": "COUNT(`*`)"
+                    },
+                    {
+                      "name": "country",
+                      "expression": "`country`"
+                    }
+                  ],
+                  "disaggregated": false
+                }
+              }
+            ],
+            "spec": {
+              "frame": {
+                "showTitle": true,
+                "title": {
+                  "value": "## <span style=\"text-align:center;display:block\">Breakdown of Customers by Country</span>",
+                  "fields": []
+                }
+              },
+              "version": 1,
+              "mark": {
+                "colors": [
+                  {
+                    "themeColorType": "visualizationColors",
+                    "position": 10
+                  },
+                  {
+                    "themeColorType": "visualizationColors",
+                    "position": 2
+                  },
+                  {
+                    "themeColorType": "visualizationColors",
+                    "position": 3
+                  },
+                  {
+                    "themeColorType": "visualizationColors",
+                    "position": 4
+                  },
+                  {
+                    "themeColorType": "visualizationColors",
+                    "position": 5
+                  },
+                  {
+                    "themeColorType": "visualizationColors",
+                    "position": 6
+                  },
+                  {
+                    "themeColorType": "visualizationColors",
+                    "position": 7
+                  },
+                  {
+                    "themeColorType": "visualizationColors",
+                    "position": 8
+                  },
+                  {
+                    "themeColorType": "visualizationColors",
+                    "position": 9
+                  },
+                  {
+                    "themeColorType": "visualizationColors",
+                    "position": 10
+                  }
+                ]
+              },
+              "widgetType": "choropleth-map",
+              "encodings": {
+                "extra": [
+                  {
+                    "fieldName": "count(*)",
+                    "displayName": "Number of customers"
+                  }
+                ],
+                "region": {
+                  "regionType": "mapbox-v4-admin",
+                  "admin0": {
+                    "fieldName": "country",
+                    "type": "field",
+                    "geographicRole": "admin0-name-en"
+                  }
+                }
+              },
+              "data": {
+                "queryName": "main_query"
+              }
+            }
+          },
+          "position": {
+            "x": 0,
+            "y": 17,
+            "width": 6,
+            "height": 6
+          }
+        },
+        {
+          "widget": {
+            "name": "top-10-customers-by-amount-spent",
+            "queries": [
+              {
+                "name": "main_query",
+                "query": {
+                  "datasetName": "8f5f73e3",
+                  "fields": [
+                    {
+                      "name": "total",
+                      "expression": "`total`"
+                    },
+                    {
+                      "name": "customer_id",
+                      "expression": "`customer_id`"
+                    }
+                  ],
+                  "disaggregated": true,
+                  "orders": [
+                    {
+                      "direction": "DESC",
+                      "expression": "`total`"
+                    }
+                  ]
+                }
+              }
+            ],
+            "spec": {
+              "frame": {
+                "showTitle": true,
+                "title": {
+                  "value": "## <span style=\"text-align:center;display:block;\">Top 10 Customers by Amount Spent</span>",
+                  "fields": []
+                }
+              },
+              "version": 2,
+              "displayRowNumbers": true,
+              "rowsPerPage": 10,
+              "widgetType": "table",
+              "encodings": {
+                "columns": [
+                  {
+                    "fieldName": "total"
+                  },
+                  {
+                    "fieldName": "customer_id"
+                  }
+                ],
+                "rowOrder": [
+                  {
+                    "by": "column-reversed",
+                    "field": {
+                      "index": 0
+                    }
+                  }
+                ]
+              },
+              "data": {
+                "queryName": "main_query"
+              }
+            }
+          },
+          "position": {
+            "x": 6,
+            "y": 17,
+            "width": 6,
+            "height": 6
+          }
+        },
+        {
+          "widget": {
+            "name": "customers1",
+            "queries": [
+              {
+                "name": "main_query",
+                "query": {
+                  "datasetName": "20524a53",
+                  "fields": [
+                    {
+                      "name": "customer_id",
+                      "expression": "`customer_id`"
+                    },
+                    {
+                      "name": "email",
+                      "expression": "`email`"
+                    },
+                    {
+                      "name": "first_name",
+                      "expression": "`first_name`"
+                    },
+                    {
+                      "name": "last_name",
+                      "expression": "`last_name`"
+                    }
+                  ],
+                  "disaggregated": true
+                }
+              }
+            ],
+            "spec": {
+              "frame": {
+                "showTitle": true,
+                "title": {
+                  "value": "## <span style=\"text-align:center;display:block\">Customers</span>",
+                  "fields": []
+                }
+              },
+              "version": 2,
+              "widgetType": "table",
+              "encodings": {
+                "columns": [
+                  {
+                    "fieldName": "customer_id"
+                  },
+                  {
+                    "fieldName": "email"
+                  },
+                  {
+                    "fieldName": "first_name"
+                  },
+                  {
+                    "fieldName": "last_name"
+                  }
+                ]
+              },
+              "data": {
+                "queryName": "main_query"
+              }
+            }
+          },
+          "position": {
+            "x": 0,
+            "y": 23,
+            "width": 12,
+            "height": 6
+          }
+        }
+      ],
+      "pageType": "PAGE_TYPE_CANVAS",
+      "layoutVersion": "GRID_V1"
+    }
+  ],
+  "uiSettings": {
+    "theme": {
+      "widgetHeaderAlignment": "ALIGNMENT_UNSPECIFIED",
+      "visualizationColorMappings": [
+        {
+          "value": "Aprilia",
+          "color": "#FCA4A1"
+        }
+      ]
+    },
+    "applyModeEnabled": false
+  }
+}
